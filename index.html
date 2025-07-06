@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Minecraft Based Item Generator</title>
+        <meta charset="utf-8">
+        <meta name="description" content="A HTML based renderer for creating Item Descriptions for Hypixel Skyblock or other Minecraft modes">
+        <meta name="keywords" content="minecraft, item generator, hypixel, skyblock">
+        <meta name="author" content="R4PlD">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta property="og:title" content="A Minecraft Item Description Generator"/>
+        <meta property="og:type" content="website"/>
+        <meta property="og:url" content="{{fix!}}" />
+        <meta property="og:description" content="A HTML based Minecraft renderer for creating item descriptions for Hypixel Skyblock or any other Minecraft mode"/>
+        <meta property="og:locale" content="en_AU">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+        
+        <script type="text/javascript" src="data/stats.js"></script>
+        <script type="text/javascript" src="data/templates.js"></script>
+        <link rel="stylesheet" type="text/css" href="styles.css"/>
+        <script type="text/javascript" src="scripts.js"></script>
+    </head>
+    <body>
+        <main>
+            <div id="toolbar">
+                <img id="banner" src="images/banner.png"/>
+            </div>
+            <textarea id="generator-textarea"></textarea>
+            <div id="generator">
+                
+                <div id="canvas-wrapper">
+                    <canvas id="canvas" width="250" height="100" tabindex='1'></canvas>    
+                </div>
+                <button onclick="copyToClipboard()">Copy Image</button>
+                <button onclick="downloadImage()">Download Image</button>
+            </div>
+
+            <div id="overlays">
+                <div id="overlay-container">
+                    <div id="overlay-wrapper">
+                        <div id="color-code-helper" class="overlay">
+                            <p class="tip">You can also use "&" symbol, followed by the Minecraft Color Code to quickly change between colors!</p>
+                            <p><i>Or you can click on one of these buttons. Up to you really...</i></p>
+                            <div>
+                                <h2>Color Codes</h2>
+                                <div id="color-code-reminder"></div>
+                            </div>
+                            <div>
+                                <h2>Formatting Codes</h2>
+                                <div id="formatting-codes-reminder"></div>
+                            </div>
+                        </div>
+                        <div id="stat-helper" class="overlay">
+                            <h2>Stats</h2>
+                            <p>Need to get a stat icon used in Hypixel Skyblock? Select one of the options here to insert it where ever you were last typing!</p>
+                            <br>
+                            <div id="stat-code-reminder">
+                            </div>
+                        </div>
+                        <div id="template-helper" class="overlay">
+                            <h2>Templates</h2>
+                            <p>Stuck for ideas? Use one of the options below to insert a template into the text box!</p>
+                            <div class="setting-container">
+                                <span>Rarity for Template</span>
+                                <select id="template-item-rarity"></select>
+                            </div>
+                            <div id="template-code-reminder">
+                            </div>
+                        </div>
+                        <div id="settings-overlay" class="overlay">
+                            <h2>Settings</h2>
+                            <p>Change the settings below to adjust how images are generated, along with how the editor looks and behaves.</p>
+                            <h3>Image Settings</h3>
+                            <div class="setting-section">
+                                <div class="setting-container">
+                                    <span>Add Gap Between First Line of Lore?</span>
+                                    <input type="checkbox" id="first-line-gap" class="setting"/>
+                                </div>
+                                <div class="setting-container">
+                                    <span>Render Background?</span>
+                                    <input type="checkbox" id="render-background" class="setting"/>
+                                </div>
+                                <div class="setting-container">
+                                    <span>Font Version</span>
+                                    <select id="font-version" class="setting">
+                                        <option value="0">1.8.9 Fonts</option>
+                                        <option value="1">1.21 Fonts</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <h3>Editor Settings</h3>
+                            <div class="setting-section">
+                                <div class="setting-container vertical">
+                                    <span>Image Refresh Interval</span>
+                                    <input type="range" id="update-period" class="setting" min="0" max="10" step="1" format="%s seconds"/>
+                                    <span id="update-period-display" class="range-display">Infinite seconds</span>
+                                </div>
+                                <div class="setting-container vertical">
+                                    <span>Rendered Image Scale</span>
+                                    <input type="range" id="image-scale" class="setting" min="0.5" max="3" step="0.25" format="x%s Scale"/>
+                                    <span id="image-scale-display" class="range-display">Infinite Scale</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="credits-overlay" class="overlay">
+                            <h2>Special Thanks</h2>
+                            <p>There are many people to thank really. Many people that I could name, but I don't really know if they want it to be publicly announced here.</p>
+                            <p>This was really done in collaboration with a bunch of players and admins from SBN who put in a lot of time into innovating, developing, testing and refining the technologies
+                            that are being used in this generator. Also there was a large group who just goofed off with it, making items and player plaques, attempts at playing Chess and general tomfoolery with generated items.</p>
+                            <p>So huge thanks to everyone involved it (including those who just used it!).</p>
+                            <p>Hopefully you know who you are.</p>
+
+                            <h2>Disclaimer</h2>
+                            <p>This is not an Official Minecraft Product or Service. Merely a recreation of the original. This isn't approved or associated with Mojang, Microsoft or Hypixel.</p>
+                            <h3>Other Important Notes</h3>
+                            <p>This is also just a generator. You're items won't actually come to life by just using this. <br><br>However, this does help to create an item which looks 99% of how it would in Minecraft, allowing you to make your ideas look 100% more professional.</p>
+                        </div>
+                    </div>
+                    <div id="icons">
+                        <div id="icon-wrapper">
+                            <a id="menu-toggle" class="icon overlay-btn menu-toggle"><img src="images/menu.png" alt="Pixel Art Paint brush and paint palette" style="--shadow-color: #c19e81;"></a>
+                            <div id="icon-wrapper-collapsable">
+                                <div id="icon-wrapper-inner">
+                                    <a class="icon overlay-btn" overlay="color-code-helper"><img src="images/flavor_r4pld.png" alt="Pixel Art Paint brush and paint palette" style="--shadow-color: #c19e81;"></a>
+                                    <a class="icon overlay-btn" overlay="stat-helper"><img src="images/stats.png" alt="Minecraft Glyph of Sea Creature Chance" style="--shadow-color: #002a2a;"></a>
+                                    <a class="icon overlay-btn" overlay="template-helper"><img src="images/templates.png" alt="Pixel Art of pencil and ruler" style="--shadow-color: #ac780a;"></a>
+                                    <a class="icon overlay-btn" overlay="settings-overlay"><img src="images/settings.png" alt="Pixel Art of a Gear" style="--shadow-color: #696c76;"></a>
+                                    <a class="icon overlay-btn" overlay="credits-overlay"><img src="images/credits.png" alt="Minecraft Glyph of a Heart" style="--shadow-color: #cc3333;"></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </body>
+</html>
