@@ -394,7 +394,6 @@ input[type="range"]::-moz-range-thumb {
     #icon-wrapper-collapsable {
         overflow-y: scroll;
         overflow-x: visible;
-        overflow-block: clip;
         max-height: 0;
         transition: all ease-in-out 0.45s;
     }

@@ -128,7 +128,6 @@ class MinecraftCanvas {
         this.textarea = textarea;
 
         this.textCanvas = document.createElement("canvas");
-        // this.textCanvas.style.backgroundColor = "#ccc"; // REMOVE LATER
         this.textCanvas.width = 1000;
         this.textCanvas.height = 100;
         this.tctx = this.textCanvas.getContext("2d", { "willReadFrequently": true });
@@ -137,7 +136,6 @@ class MinecraftCanvas {
         this.setAntiAliasing(this.ctx);
         this.setAntiAliasing(this.tctx);
 
-        //document.body.appendChild(this.textCanvas); // REMOVE LATER
         this.changeWrapperSize();
         this.changeCanvasSize((LEFT_OFFSET) * 2, (TOP_OFFSET) * 2 + FONT_SIZE, false);
     }
@@ -862,7 +860,7 @@ window.addEventListener("load", async (event) => {
 
         if (input.type == "range") {
             let updateDisplay = (event) => {
-                let format = event.target.getAttribute("format");
+                let format = event.target.getAttribute("data-format");
                 document.getElementById(event.target.id + "-display").innerHTML = format.replace("%s", event.target.value);
             };
 
@@ -891,7 +889,7 @@ window.addEventListener("load", async (event) => {
     await loadFonts();
 
     document.querySelectorAll(".overlay-btn").forEach(element => {
-        var targetOverlay = element.getAttribute("overlay");
+        var targetOverlay = element.getAttribute("data-overlay");
         if (targetOverlay == undefined) {
             return;
         }

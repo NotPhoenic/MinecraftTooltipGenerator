@@ -7,25 +7,25 @@
         <meta name="keywords" content="minecraft, item generator, hypixel, skyblock">
         <meta name="author" content="R4PlD">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta property="og:title" content="A Minecraft Item Description Generator"/>
-        <meta property="og:type" content="website"/>
-        <meta property="og:url" content="{{fix!}}" />
-        <meta property="og:description" content="A HTML based Minecraft renderer for creating item descriptions for Hypixel Skyblock or any other Minecraft mode"/>
+        <meta property="og:title" content="A Minecraft Item Description Generator">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://rapidthrower264.github.io/MinecraftItemGenerator/">
+        <meta property="og:image" content="https://rapidthrower264.github.io/MinecraftItemGenerator/images/banner.png">
+        <meta property="og:description" content="A HTML based Minecraft renderer for creating item descriptions for Hypixel Skyblock or any other Minecraft mode">
         <meta property="og:locale" content="en_AU">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-        
-        <script type="text/javascript" src="data/stats.js"></script>
-        <script type="text/javascript" src="data/templates.js"></script>
-        <link rel="stylesheet" type="text/css" href="styles.css"/>
-        <script type="text/javascript" src="scripts.js"></script>
+        <script src="data/stats.js"></script>
+        <script src="data/templates.js"></script>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <script src="scripts.js"></script>
     </head>
     <body>
         <main>
             <div id="toolbar">
-                <img id="banner" src="images/banner.png"/>
+                <img id="banner" src="images/banner.png" alt="Banner with Minecraft Item and a Creeper Face">
             </div>
             <textarea id="generator-textarea"></textarea>
             <div id="generator">
@@ -76,11 +76,11 @@
                             <div class="setting-section">
                                 <div class="setting-container">
                                     <span>Add Gap Between First Line of Lore?</span>
-                                    <input type="checkbox" id="first-line-gap" class="setting"/>
+                                    <input type="checkbox" id="first-line-gap" class="setting">
                                 </div>
                                 <div class="setting-container">
                                     <span>Render Background?</span>
-                                    <input type="checkbox" id="render-background" class="setting"/>
+                                    <input type="checkbox" id="render-background" class="setting">
                                 </div>
                                 <div class="setting-container">
                                     <span>Font Version</span>
@@ -94,12 +94,12 @@
                             <div class="setting-section">
                                 <div class="setting-container vertical">
                                     <span>Image Refresh Interval</span>
-                                    <input type="range" id="update-period" class="setting" min="0" max="10" step="1" format="%s seconds"/>
+                                    <input type="range" id="update-period" class="setting" min="0" max="10" step="1" data-format="%s seconds">
                                     <span id="update-period-display" class="range-display">Infinite seconds</span>
                                 </div>
                                 <div class="setting-container vertical">
                                     <span>Rendered Image Scale</span>
-                                    <input type="range" id="image-scale" class="setting" min="0.5" max="3" step="0.25" format="x%s Scale"/>
+                                    <input type="range" id="image-scale" class="setting" min="0.5" max="3" step="0.25" data-format="x%s Scale">
                                     <span id="image-scale-display" class="range-display">Infinite Scale</span>
                                 </div>
                             </div>
@@ -123,11 +123,11 @@
                             <a id="menu-toggle" class="icon overlay-btn menu-toggle"><img src="images/menu.png" alt="Pixel Art Paint brush and paint palette" style="--shadow-color: #c19e81;"></a>
                             <div id="icon-wrapper-collapsable">
                                 <div id="icon-wrapper-inner">
-                                    <a class="icon overlay-btn" overlay="color-code-helper"><img src="images/flavor_r4pld.png" alt="Pixel Art Paint brush and paint palette" style="--shadow-color: #c19e81;"></a>
-                                    <a class="icon overlay-btn" overlay="stat-helper"><img src="images/stats.png" alt="Minecraft Glyph of Sea Creature Chance" style="--shadow-color: #002a2a;"></a>
-                                    <a class="icon overlay-btn" overlay="template-helper"><img src="images/templates.png" alt="Pixel Art of pencil and ruler" style="--shadow-color: #ac780a;"></a>
-                                    <a class="icon overlay-btn" overlay="settings-overlay"><img src="images/settings.png" alt="Pixel Art of a Gear" style="--shadow-color: #696c76;"></a>
-                                    <a class="icon overlay-btn" overlay="credits-overlay"><img src="images/credits.png" alt="Minecraft Glyph of a Heart" style="--shadow-color: #cc3333;"></a>
+                                    <a class="icon overlay-btn" data-overlay="color-code-helper"><img src="images/flavor_r4pld.png" alt="Pixel Art Paint brush and paint palette" style="--shadow-color: #c19e81;"></a>
+                                    <a class="icon overlay-btn" data-overlay="stat-helper"><img src="images/stats.png" alt="Minecraft Glyph of Sea Creature Chance" style="--shadow-color: #002a2a;"></a>
+                                    <a class="icon overlay-btn" data-overlay="template-helper"><img src="images/templates.png" alt="Pixel Art of pencil and ruler" style="--shadow-color: #ac780a;"></a>
+                                    <a class="icon overlay-btn" data-overlay="settings-overlay"><img src="images/settings.png" alt="Pixel Art of a Gear" style="--shadow-color: #696c76;"></a>
+                                    <a class="icon overlay-btn" data-overlay="credits-overlay"><img src="images/credits.png" alt="Minecraft Glyph of a Heart" style="--shadow-color: #cc3333;"></a>
                                 </div>
                             </div>
                         </div>
