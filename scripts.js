@@ -18,7 +18,7 @@ class MinecraftGenerator {
 
         // generator refresh settings.
         this.timeout = undefined;
-        this.isValid = true;
+        this.isValid = false;
         this.updatePeriodChange(this.settings.updatePeriod);
 
         // creating listeners for all settings so that the generator remains up to date
@@ -31,6 +31,8 @@ class MinecraftGenerator {
         this.settings.getCallback("update-period").addListener((value) => {
             this.updatePeriodChange(value);
         });
+
+        this.redrawImage();
     }
 
     forceRerender(_) {
@@ -686,6 +688,7 @@ STYLES.forEach(style => {
 
 // registering all of the characters to objects
 const GLYPHS = [];
+const RANDOM_INTROS = ["&cText &9Will &6Go &aHere", "&fGet &cCreative &fWith It!", "&6&lBIG &fWords &b&lGo &fHere", "&fHere's a Canvas...\n     &e&oGo &a&oPaint!"]
 
 var defaultColor = GRAY;
 var defaultStyles = [false, false, false, false, false];
@@ -879,9 +882,8 @@ window.addEventListener("load", async (event) => {
     });
 
     textarea = document.getElementById("generator-textarea");
+    textarea.value = RANDOM_INTROS[Math.floor(Math.random() * RANDOM_INTROS.length)];
     var canvasWrapper = document.getElementById("canvas-wrapper");
-    var c = document.getElementById("canvas");
-    canvas = new MinecraftGenerator(c, canvasWrapper, textarea, settings);
 
     loadColors();
     loadStats();
@@ -933,6 +935,9 @@ window.addEventListener("load", async (event) => {
             document.getElementById("overlays").classList.remove("active");
         });
     });
+
+    var c = document.getElementById("canvas");
+    canvas = new MinecraftGenerator(c, canvasWrapper, textarea, settings);
 });
 
 function copyToClipboard() {
