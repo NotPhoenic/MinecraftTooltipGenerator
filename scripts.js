@@ -161,7 +161,7 @@ class MinecraftCanvas {
         var spriteWidth = 16;
 
         var styleOffset = 0;
-        if (styles.isBold) {
+        if (styles.isBold && text.length > 0) {
             styleOffset += dpi;
         }
         let currentGlyphPageCode = -1;
@@ -191,6 +191,7 @@ class MinecraftCanvas {
             this.tctx.drawImage(glyphPage.fontImage, spriteX, spriteY, spriteWidth, spriteWidth, lineWidth, 0, 16, 16);
             lineWidth += (glyphPage.getGlyphWidth(code) + dpi) + styleOffset;
         }
+        lineWidth -= styleOffset;
 
         if (styles.isBold) {
             // drawing a copy shifted to the left 1px
