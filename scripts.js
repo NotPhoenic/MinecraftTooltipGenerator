@@ -774,7 +774,7 @@ function loadStats() {
         }
         let statColor = REGISTERED_COLORS[stat.color];
 
-        let button = createButton("stat-reminder", text, statColor, () => {return `&${statColor.code}${charCode} ${stat.stat}`});//createButton(text, REGISTERED_COLORS[stat.color], insertText);
+        let button = createButton("stat-reminder", text, statColor, () => {return `&${statColor.code}${charCode} ${stat.stat}`});
         button.style.setProperty("--color", REGISTERED_COLORS[stat.color].color);
 
         categories[category].appendChild(button);
