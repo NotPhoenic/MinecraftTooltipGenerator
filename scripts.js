@@ -5,7 +5,7 @@ class MinecraftGenerator {
         this.htmlCanvas = htmlCanvas;
         this.settings = settings;
 
-        this.textManager = new TextManager();
+        this.textManager = new TextManager(settings);
         this.canvas = new MinecraftCanvas(this.textManager, htmlCanvas, canvasWrapper, textarea, this.settings);
 
         // creating listener for text area
@@ -31,8 +31,6 @@ class MinecraftGenerator {
         this.settings.getCallback("update-period").addListener((value) => {
             this.updatePeriodChange(value);
         });
-
-        this.redrawImage();
     }
 
     forceRerender(_) {
@@ -43,24 +41,24 @@ class MinecraftGenerator {
         }
     }
 
-    redrawImage() {
+    async redrawImage() {
         // redraws the screen if it needs to
         if (this.isValid)
             return;
 
-        this.textManager.splitText(this.textarea.value);
+        await this.textManager.splitText(this.textarea.value);
         
         let height = this.canvas.convertLineToYCoord(this.textManager.lines.length - 1) + FONT_SIZE + TOP_OFFSET;
         this.canvas.changeCanvasSize(LEFT_OFFSET * 2, height, false);
         // iterate over all the lines, drawing each section based on it's color
-        this.textManager.lines.forEach(async (line, index) => {
+        this.textManager.lines.forEach((line, index) => {
             let y = this.canvas.convertLineToYCoord(index);
             let segments = line.segments;
             
             for (let i = 0; i < line.length; i++) {
                 let segment = segments[i];
                 if (!segment.isValid) {
-                    const width = await this.canvas.drawText(segment.text, segment.x, y, segment);
+                    const width = this.canvas.drawText(segment.text, segment.x, y, segment);
                     if (i + 1 < segments.length && segment.x + width != segments[i + 1].x) {
                         segments[i + 1].x = segment.x + width;
                         segments[i + 1].isValid = false;
@@ -156,7 +154,7 @@ class MinecraftCanvas {
         return TOP_OFFSET + yValue * LINE_HEIGHT + ((yValue > 0 && this.settings.firstLineGap) ? 2 * dpi : 0);
     }
 
-    async drawText(text, x, y, styles) {
+    drawText(text, x, y, styles) {
         // draws the text onto the generator, applying any styles.
         var spriteWidth = 16;
 
@@ -178,12 +176,6 @@ class MinecraftCanvas {
             if (page != currentGlyphPageCode) {
                 currentGlyphPageCode = page;
                 glyphPage = GLYPHS[this.settings.fontVersion][page];
-                if (!glyphPage.isReady) {
-                    var loadedSuccessful = await glyphPage.load();
-                    if (!loadedSuccessful) {
-                        return;
-                    }
-                }
             }
 
             let spriteX = (code % 16) * spriteWidth;
@@ -249,9 +241,7 @@ class MinecraftCanvas {
             lineWidth -= 2;
         }
 
-        return new Promise((resolve) => {
-            resolve(lineWidth);
-        });
+        return lineWidth;
     }
 
     drawBackground() {
@@ -354,19 +344,26 @@ class MCStat {
 }
 
 class TextManager {
-    constructor() {
+    constructor(settings) {
         this.lines = [];
+        this.settings = settings;
     }
 
     get length() {
         return this.lines.length;
     }
 
-    get line() {
-        return this.lines[this.currentLine];
-    }
+    async splitText(text) {
+        for (const character of text) {
+            let characterCodePage = Math.floor(character.codePointAt(0) / 256);
+            if (!GLYPHS[this.settings.fontVersion][characterCodePage].isReady) {
+                let successfulLoading = await GLYPHS[this.settings.fontVersion][characterCodePage].load()
+                if (!successfulLoading) {
+                    return;
+                }
+            }
+        }
 
-    splitText(text) {
         this.lines = [];
         let textLines = text.split("\n");
 
@@ -393,13 +390,13 @@ class TextManager {
                     currentLine.segments[currentLine.length - 1].add(currentSection);
                 }
                 else {
-                    let character = currentSection.charAt(1).toLowerCase();
+                    let character = currentSection.charAt(1);
                     if (character in COLOR_CODES) {
                         styles = defaultStyles.slice();
                         currentColor = COLOR_CODES[character];
                         currentLine.add(new LineSegment(currentSection.substring(2), currentColor, styles));
                     }
-                    else if (character in STYLE_CODES) {
+                    else {
                         var targetSegment = currentLine.segments[currentLine.length - 1];
                         let style = STYLE_CODES[character];
 
@@ -939,6 +936,7 @@ window.addEventListener("load", async (event) => {
 
     var c = document.getElementById("canvas");
     canvas = new MinecraftGenerator(c, canvasWrapper, textarea, settings);
+    await canvas.redrawImage();
 });
 
 function copyToClipboard() {
