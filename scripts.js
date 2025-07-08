@@ -183,7 +183,6 @@ class MinecraftCanvas {
             this.tctx.drawImage(glyphPage.fontImage, spriteX, spriteY, spriteWidth, spriteWidth, lineWidth, 0, 16, 16);
             lineWidth += (glyphPage.getGlyphWidth(code) + dpi) + styleOffset;
         }
-        lineWidth -= styleOffset;
 
         if (styles.isBold) {
             // drawing a copy shifted to the left 1px
@@ -217,7 +216,7 @@ class MinecraftCanvas {
         
         // check if the image needs extending and extend it if it needs to
         if (x + lineWidth > this.drawableWidth) {
-            this.changeCanvasSize(x + lineWidth + LEFT_OFFSET - dpi, this.height, true);
+            this.changeCanvasSize(x + lineWidth + LEFT_OFFSET, this.height, true);
         }
 
         var fontOffsets = styles.isItalic ? -1 : 0 + styles.isStrikethrough ? -dpi : 0;
