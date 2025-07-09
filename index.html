@@ -34,9 +34,20 @@
             </div>
             <textarea id="generator-textarea"></textarea>
             <div id="generator">
-                
                 <div id="canvas-wrapper">
-                    <canvas id="canvas" width="250" height="100" tabindex='1'></canvas>    
+                    <canvas id="canvas" width="250" height="100" tabindex='1' >
+                        <div id="js-disabled-text">
+                            <p><strong>Hey!</strong><br>
+                                If you can read this, it probably means that you have scripts disabled.<br><br>This website uses a single Javascript file to implement
+                                implement the rendering. Depending on your browser, there should be a way to re-enable scripts for your specific browser.<br><br>
+                                Here are a couple of links on how you can re-enable it!</p>
+                            <ul>
+                                <li><a href="https://support.google.com/admanager/answer/12654" target="_blank">Google Chrome</a></li>
+                                <li><a href="https://support.mozilla.org/en-US/kb/javascript-settings-for-interactive-web-pages" target="_blank">Mozilla Firefox</a></li>
+                                <li><a href="https://support.microsoft.com/en-us/office/enable-javascript-7bb9ee74-6a9e-4dd1-babf-b0a1bb136361" target="_blank">Edge and Safari</a></li>
+                            </ul>
+                        </div>
+                    </canvas>    
                 </div>
                 <button onclick="copyToClipboard()">Copy Image</button>
                 <button onclick="downloadImage()">Download Image</button>
