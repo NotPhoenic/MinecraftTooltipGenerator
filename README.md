@@ -7,6 +7,8 @@ Creating items for Hypixel Skyblock Concepts (or Minecraft Tooltips) can be a li
 
 This website allows you simply type in the text for an item, and it will automatically render a Minecraft style tooltip out for you, ready for copying straight into your concepts or project.
 
+This is an website that allows you to simply type in the text that you want for an item, and it will automatically render it into Minecraft style tooltip, ready for use in a concept or project. You have the ability to change the color, **boldness**, *italicize*, ~~strikethrough~~ and even <ins>underline</ins>! It uses the same font files that Minecraft uses so you get that "authentic" look how how it would in game. So go crazy with using some of the more obscure Unicode characters. 
+
 ![UI of the application](images/readme/ui-example.png)
 
 ## Features
@@ -24,7 +26,7 @@ This website allows you simply type in the text for an item, and it will automat
 
 ## Example
 ```
-&5Overflux Capacitor
+&5Overflux Power Orb
 &6Item Ability: Deploy
 &7Place an orb for &a60s &7buffing
 &7up to &b5 &7players within &a18
