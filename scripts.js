@@ -58,7 +58,8 @@ class MinecraftGenerator {
             for (let i = 0; i < line.length; i++) {
                 let segment = segments[i];
                 if (!segment.isValid) {
-                    const width = this.canvas.drawText(segment.text, segment.x, y, segment);
+                    segment.y = y;
+                    const width = this.canvas.renderText(segment.text, segment.x, segment.y, segment);
                     if (i + 1 < segments.length && segment.x + width != segments[i + 1].x) {
                         segments[i + 1].x = segment.x + width;
                         segments[i + 1].isValid = false;
@@ -97,13 +98,23 @@ class MinecraftGenerator {
     }
 
     async downloadImage(imageName) {
+        let blob;
+        let fileFormat;
+        if (this.textManager.hasObfuscatedText()) {
+            const encoder = new GifEncoder();
+            encoder.createImage(this.canvas, 6);
+            fileFormat = "gif";
+            blob = new Blob([encoder.stream], { type: 'image/gif' });
+        } else {
+            blob = await this.canvas.getImageFromCanvas();
+            fileFormat = "png";
+        }
+
         try {
-            const blob = await this.canvas.getImageFromCanvas();
             const dataURL = URL.createObjectURL(blob);
-        
             let link = document.createElement('a');
             link.style.display = "none";
-            link.setAttribute('download', imageName + ".png");
+            link.setAttribute('download', `${imageName}.${fileFormat}`);
             link.href = dataURL;
 
             document.body.appendChild(link);
@@ -130,14 +141,24 @@ class MinecraftCanvas {
         this.textCanvas = document.createElement("canvas");
         this.textCanvas.width = 1000;
         this.textCanvas.height = 100;
-        this.tctx = this.textCanvas.getContext("2d", { "willReadFrequently": true });
+        this.tctx = this.textCanvas.getContext("2d", {"willReadFrequently": true});
         this.tctx.fillStyle = "white";
+
+        this.obfuscatedCanvas = document.createElement("canvas");
+        this.obfuscatedCanvas.width = 1000;
+        this.obfuscatedCanvas.height = 100;
+        this.octx = this.obfuscatedCanvas.getContext("2d", {"willReadFrequently": true});
+        this.octx.fillStyle = "white";
 
         this.setAntiAliasing(this.ctx);
         this.setAntiAliasing(this.tctx);
+        this.setAntiAliasing(this.octx);
 
         this.changeWrapperSize();
         this.changeCanvasSize((LEFT_OFFSET) * 2, (TOP_OFFSET) * 2 + FONT_SIZE, false);
+
+        this.colors = null;
+        this.obfuscatedSegments = null;
     }
 
     setAntiAliasing(context) {
@@ -154,7 +175,7 @@ class MinecraftCanvas {
         return TOP_OFFSET + yValue * LINE_HEIGHT + ((yValue > 0 && this.settings.firstLineGap) ? 2 * dpi : 0);
     }
 
-    drawText(text, x, y, styles) {
+    drawText(text, x, styles) {
         // draws the text onto the generator, applying any styles.
         var spriteWidth = 16;
 
@@ -219,18 +240,56 @@ class MinecraftCanvas {
             this.changeCanvasSize(x + lineWidth + LEFT_OFFSET, this.height, true);
         }
 
+        return lineWidth;
+    }
+
+    randomizeText(length) {
+        let finalString = "";
+        let characterList = OBFUSCATED_CHARACTER_REPLACEMENT[this.settings.fontVersion];
+        let currentIndex = Math.floor(Math.random() * characterList.length);
+
+        while (finalString.length < length) {
+            let newEnd = Math.min(characterList.length, currentIndex + length - finalString.length);
+            finalString += characterList.substring(currentIndex, newEnd);
+            currentIndex = newEnd >= characterList.length ? 0 : newEnd;
+        }
+        
+        return finalString;
+    }
+
+    renderText(text, x, y, styles, target=null) {
+        if (target == null) {
+            target = this.ctx;
+        }
+
+        if (styles.isObfuscated) {
+            text = this.randomizeText(text.length);
+        }
+
+        let lineWidth = this.drawText(text, x, styles);
         var fontOffsets = styles.isItalic ? -1 : 0 + styles.isStrikethrough ? -dpi : 0;
         
         // draw the drop shadow for the text
         this.tctx.globalCompositeOperation = "source-in";
         this.tctx.fillStyle = styles.color.dropShadow;
         this.tctx.fillRect(0, 0, lineWidth, 18);
-        this.ctx.drawImage(this.textCanvas, 0, 0, lineWidth, FONT_SIZE + 4, x + dpi + fontOffsets, y + dpi, lineWidth, FONT_SIZE + 4);
+        target.drawImage(this.textCanvas, 0, 0, lineWidth, FONT_SIZE + 4, x + dpi + fontOffsets, y + dpi, lineWidth, FONT_SIZE + 4);
+
+        if (styles.isObfuscated) {
+            // clear the buffer and update the current x position
+            this.tctx.globalCompositeOperation = "source-over";
+            this.tctx.clearRect(0, 0, lineWidth, 18);
+            
+            // drawing more scrambled text
+            text = this.randomizeText(text.length);
+            this.drawText(text, x, styles);
+            this.tctx.globalCompositeOperation = "source-in";
+        }
 
         // draw the main text for the text
         this.tctx.fillStyle = styles.color.color;
         this.tctx.fillRect(0, 0, lineWidth, 18);
-        this.ctx.drawImage(this.textCanvas, 0, 0, lineWidth, FONT_SIZE + 2, x + fontOffsets, y, lineWidth, FONT_SIZE + 2);
+        target.drawImage(this.textCanvas, 0, 0, lineWidth, FONT_SIZE + 2, x + fontOffsets, y, lineWidth, FONT_SIZE + 2);
 
         // clear the buffer and update the current x position
         this.tctx.globalCompositeOperation = "source-over";
@@ -305,6 +364,58 @@ class MinecraftCanvas {
             })
         })
     }
+
+    get canvasWidth() {
+        return this.canvas.width;
+    }
+
+    get canvasHeight() {
+        return this.canvas.height;
+    }
+
+    initialiseGif() {
+        let data = this.textContent.getSegmentData();
+        this.colors = data[0];
+        this.obfuscatedSegments = data[1];
+
+        this.obfuscatedCanvas.width = this.canvas.width;
+        this.obfuscatedCanvas.height = this.canvas.height;
+    }
+
+    get imageColors() {
+        return this.colors;
+    }
+
+    getBaseFrame() {
+        return this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    * frameGenerator() {
+        this.obfuscatedCanvas.width = this.canvas.width;
+        this.obfuscatedCanvas.height = this.canvas.height;
+
+        let left = Number.MAX_SAFE_INTEGER;
+        let right = Number.MIN_SAFE_INTEGER;
+        let top = this.obfuscatedSegments[0].y;
+        let bottom = this.obfuscatedSegments[this.obfuscatedSegments.length - 1].y + LINE_HEIGHT;
+
+        this.obfuscatedSegments.forEach(segment => {
+            segment.width = this.renderText(segment.text, segment.x, segment.y, segment, this.octx);
+            left = Math.min(segment.x, left);
+            right = Math.max(segment.x + segment.width, right);
+        });
+
+        this.octx.fillStyle = backgroundColor;
+        while (true) {
+            this.obfuscatedSegments.forEach(segment => {
+                if (this.settings.renderBackground)
+                    this.octx.fillRect(segment.x, segment.y, segment.width, LINE_HEIGHT);
+                this.renderText(segment.text, segment.x, segment.y, segment, this.octx);
+            });
+
+            yield [this.octx.getImageData(left, top, right - left, bottom - top), left, top];
+        }
+    }
 }
 
 class MCColor {
@@ -321,11 +432,11 @@ class MCColor {
 }
 
 class MCCode {
-    constructor(code, name, shorthand, styleIndex, style) {
+    constructor(code, name, shorthand, style) {
         this.code = code;
         this.name = name;
         this.shorthand = shorthand;
-        this.styleIndex = styleIndex;
+        this.styleIndex = 0;
         this.style = style;
     }
 
@@ -366,11 +477,11 @@ class TextManager {
         this.lines = [];
         let textLines = text.split("\n");
 
-        var currentColor = GRAY;
-        var styles = defaultStyles.slice();
+        var currentColor = DEFAULT_COLOR;
+        var styles = DEFAULT_STYLES.slice();
         
         textLines.forEach((currentText) => {
-            let currentLine = new Line(currentColor);
+            let currentLine = new Line(currentColor, styles);
             let currentIndex = 0;
             let stopIndex = 0;
             let regex = currentText.matchAll(/&/g);
@@ -391,7 +502,7 @@ class TextManager {
                 else {
                     let character = currentSection.charAt(1);
                     if (character in COLOR_CODES) {
-                        styles = defaultStyles.slice();
+                        styles = DEFAULT_STYLES.slice();
                         currentColor = COLOR_CODES[character];
                         currentLine.add(new LineSegment(currentSection.substring(2), currentColor, styles));
                     }
@@ -405,7 +516,9 @@ class TextManager {
                         }
 
                         if (style.code == "r") {
-                            styles = defaultStyles;
+                            currentColor = DEFAULT_COLOR;
+                            targetSegment.setColor(currentColor);
+                            styles = DEFAULT_STYLES;
                         }
                         else {
                             styles[style.styleIndex] = true;
@@ -423,6 +536,30 @@ class TextManager {
         });
     }
 
+    getSegmentData() {
+        let colors = new Set(["transparent", backgroundColor, borderColor]);
+        let obfuscatedSegments = new Array();
+        
+        this.lines.forEach((line) => {
+            line.lineSegments.forEach(segment => {
+                colors.add(segment.color.color);
+                colors.add(segment.color.dropShadow);
+                
+                if (segment.isObfuscated) {
+                    obfuscatedSegments.push(segment);
+                }
+            });
+        });
+
+        return [colors, obfuscatedSegments];
+    }
+
+    hasObfuscatedText() {
+        return this.lines.some(line => 
+            line.lineSegments.some(segment => segment.isObfuscated)
+        );
+    }
+
     toString() {
         var result = "|";
         this.lines.forEach(element => {
@@ -435,9 +572,9 @@ class TextManager {
 }
 
 class Line {
-    constructor(color) {
+    constructor(color, styles=DEFAULT_STYLES) {
         this.x = LEFT_OFFSET;
-        this.lineSegments = [new LineSegment("", color, defaultStyles)];
+        this.lineSegments = [new LineSegment("", color, styles)];
     }
 
     get length() {
@@ -477,10 +614,19 @@ class LineSegment {
         this.setStyles(styles);
 
         this.isValid = false;
+        this.segmentWidth = 0;
     }
 
     get length() {
         return this.text.length;
+    }
+
+    get width() {
+        return this.segmentWidth;
+    }
+
+    set width(value) {
+        this.segmentWidth = value;
     }
 
     add(text) {
@@ -489,7 +635,11 @@ class LineSegment {
 
     hasSameStyles(styles) {
         return this.isBold == styles[0] && this.isStrikethrough == styles[1] 
-            && this.isUnderline == styles[2] && this.isItalic == styles[3];
+            && this.isUnderline == styles[2] && this.isItalic == styles[3] && this.isObfuscated == styles[4];;
+    }
+
+    setColor(color) {
+        this.color = color;
     }
 
     setStyles(styles) {
@@ -497,6 +647,7 @@ class LineSegment {
         this.isStrikethrough = styles[1];
         this.isUnderline = styles[2];
         this.isItalic = styles[3];
+        this.isObfuscated = styles[4];
     }
 
     draw() {
@@ -642,27 +793,33 @@ class GlyphSprite {
     }
 }
 
-const BLACK = new MCColor("0", "BLACK", "rgb(0, 0, 0)", "rgb(0, 0, 0)");
-const DARK_BLUE = new MCColor("1", "DARK_BLUE", "rgb(0, 0, 170)", "rgb(0, 0, 42)");
-const DARK_GREEN = new MCColor("2", "DARK_GREEN", "rgb(0, 170, 0)", "rgb(0, 42, 0)");
-const DARK_AQUA = new MCColor("3", "DARK_AQUA", "rgb(0, 170, 170)", "rgb(0, 42, 42)");
-const DARK_RED = new MCColor("4", "DARK_RED", "rgb(170, 0, 0)", "rgb(42, 0, 0)");
-const DARK_PURPLE = new MCColor("5", "DARK_PURPLE", "rgb(170, 0, 170)", "rgb(42, 0, 42)");
-const GOLD = new MCColor("6", "GOLD", "rgb(255, 170, 0)", "rgb(42, 42, 0)");
-const GRAY = new MCColor("7", "GRAY", "rgb(170, 170, 170)", "rgb(42, 42, 42)");
-const DARK_GRAY = new MCColor("8", "DARK_GRAY", "rgb(85, 85, 85)", "rgb(21, 21, 21)");
-const BLUE = new MCColor("9", "BLUE", "rgb(85, 85, 255)", "rgb(21, 21, 63)");
-const GREEN = new MCColor("a", "GREEN", "rgb(85, 255, 85)", "rgb(21, 63, 21)");
-const AQUA = new MCColor("b", "AQUA", "rgb(85, 255, 255)", "rgb(21, 63, 63)");
-const RED = new MCColor("c", "RED", "rgb(255, 85, 85)", "rgb(63, 21, 21)");
-const LIGHT_PURPLE = new MCColor("d", "LIGHT_PURPLE", "rgb(255, 85, 255)", "rgb(63, 21, 63)");
-const YELLOW = new MCColor("e", "YELLOW", "rgb(255, 255, 85)", "rgb(63, 63, 21)");
-const WHITE = new MCColor("f", "WHITE", "rgb(255, 255, 255)", "rgb(63, 63, 63)");
-const BOLD = new MCCode("l", "BOLD", "BOLD", 0, "font-weight: 900;");
-const STRIKETHROUGH = new MCCode("m", "STRIKETHROUGH", "STRIKE", 1, "text-decoration: line-through;");
-const UNDERLINE = new MCCode("n", "UNDERLINE", "UNDER", 2, "text-decoration: underline;");
-const ITALIC = new MCCode("o", "ITALIC", "ITALIC", 3, "font-style: italic;");
-const RESET = new MCCode("r", "RESET", "RESET", 4, "");
+const BLACK = new MCColor("0", "BLACK", "#000000", "#000000");
+const DARK_BLUE = new MCColor("1", "DARK_BLUE", "#0000aa", "#00002a");
+const DARK_GREEN = new MCColor("2", "DARK_GREEN", "#00aa00", "#002a00");
+const DARK_AQUA = new MCColor("3", "DARK_AQUA", "#00aaaa", "#002a2a");
+const DARK_RED = new MCColor("4", "DARK_RED", "#aa0000ff", "#2a0000");
+const DARK_PURPLE = new MCColor("5", "DARK_PURPLE", "#aa00aa", "#2a002a");
+const GOLD = new MCColor("6", "GOLD", "#ffaa00", "#2a2a00");
+const GRAY = new MCColor("7", "GRAY", "#aaaaaa", "#2a2a2a");
+const DARK_GRAY = new MCColor("8", "DARK_GRAY", "#555555", "#151515");
+const BLUE = new MCColor("9", "BLUE", "#5555ff", "#15153f");
+const GREEN = new MCColor("a", "GREEN", "#55ff55", "#153f15");
+const AQUA = new MCColor("b", "AQUA", "#55ffff", "#153f3f");
+const RED = new MCColor("c", "RED", "#ff5555", "#3f1515");
+const LIGHT_PURPLE = new MCColor("d", "LIGHT_PURPLE", "#ff55ff", "#3f153f");
+const YELLOW = new MCColor("e", "YELLOW", "#ffff55", "#3f3f15");
+const WHITE = new MCColor("f", "WHITE", "#ffffff", "#3f3f3f");
+const BOLD = new MCCode("l", "BOLD", "BOLD", "font-weight: 900;");
+const STRIKETHROUGH = new MCCode("m", "STRIKETHROUGH", "STRIKE", "text-decoration: line-through;");
+const UNDERLINE = new MCCode("n", "UNDERLINE", "UNDER", "text-decoration: underline;");
+const ITALIC = new MCCode("o", "ITALIC", "ITALIC", "font-style: italic;");
+const RESET = new MCCode("r", "RESET", "RESET", "");
+const OBFUSCATED = new MCCode("k", "OBFUSCATED", "OBFUSCATED<br><span style='font-size: 0.7em; font-style: italic;'>Requires downloading Gif</span>", "");
+
+const OBFUSCATED_CHARACTER_REPLACEMENT = [
+    "¬=\\-3VmÅAºöøxçJyú$7äåîT_²ü/ñÜ8âZÑô&½ªqàgÉoé£ØóXòá+ÆESR4PLD?9BhcCvUNw#èQ·LrjëuGHYF»zÄ¿ù%6ÿnK¼Oedp1ûbæ0ÇÖsM^aW52ê«",
+    "Wqß1#BGN§R4PLDMZdÞ¥Fx7S0p¿8/OzKwJh2¬CgØð9n¢µþ?s±Lc^VAQuUe=%×5T¯+H£m&r_Eo\\avYbX-3jøy6÷$"
+];
 
 const REGISTERED_CODES = [];
 const COLORS = [BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE];
@@ -674,27 +831,28 @@ COLORS.forEach(color => {
     REGISTERED_CODES.push(color.code);
 });
 
-const STYLES = [BOLD, STRIKETHROUGH, UNDERLINE, ITALIC, RESET];
+const STYLES = [BOLD, STRIKETHROUGH, UNDERLINE, ITALIC, OBFUSCATED, RESET];
 const STYLE_CODES = {};
 const REGISTERED_STYLES = {};
-STYLES.forEach(style => {
+STYLES.forEach((style, index) => {
+    style.styleIndex = index;
     STYLE_CODES[style.code] = style;
     REGISTERED_STYLES[style.name] = style;
     REGISTERED_CODES.push(style.code);
 });
 
+var DEFAULT_COLOR = GRAY;
+var DEFAULT_STYLES = new Array(STYLES.length - 1).fill(false);
+
 // registering all of the characters to objects
 const GLYPHS = [];
-const RANDOM_INTROS = ["&cText &9Will &6Go &aHere", "&fGet &cCreative &fWith It!", "&6&lBIG &fWords &b&lGo &fHere", "&fHere's a Canvas...\n     &e&oGo &a&oPaint!"]
-
-var defaultColor = GRAY;
-var defaultStyles = [false, false, false, false, false];
+const RANDOM_INTROS = ["&cText &9Will &6Go &aHere", "&fGet &cCreative &fWith It!", "&6&lBIG &fWords &b&lGo &fHere", "&fHere's a Canvas...\n     &e&oGo &a&oPaint!"];
 
 var canvas;
 
 var dpi = 2;
 var spacing = 2;
-var backgroundColor = "rgb(20, 3, 20)";
+var backgroundColor = "#140314";
 var borderColor = "#25005e";
 
 var TOP_OFFSET = 4 * dpi + spacing;
