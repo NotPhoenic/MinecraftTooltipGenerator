@@ -366,11 +366,11 @@ class TextManager {
         this.lines = [];
         let textLines = text.split("\n");
 
-        var currentColor = GRAY;
-        var styles = defaultStyles.slice();
+        var currentColor = DEFAULT_COLOR;
+        var styles = DEFAULT_STYLES.slice();
         
         textLines.forEach((currentText) => {
-            let currentLine = new Line(currentColor);
+            let currentLine = new Line(currentColor, styles);
             let currentIndex = 0;
             let stopIndex = 0;
             let regex = currentText.matchAll(/&/g);
@@ -391,7 +391,7 @@ class TextManager {
                 else {
                     let character = currentSection.charAt(1);
                     if (character in COLOR_CODES) {
-                        styles = defaultStyles.slice();
+                        styles = DEFAULT_STYLES.slice();
                         currentColor = COLOR_CODES[character];
                         currentLine.add(new LineSegment(currentSection.substring(2), currentColor, styles));
                     }
@@ -405,7 +405,9 @@ class TextManager {
                         }
 
                         if (style.code == "r") {
-                            styles = defaultStyles;
+                            currentColor = DEFAULT_COLOR;
+                            targetSegment.setColor(currentColor);
+                            styles = DEFAULT_STYLES;
                         }
                         else {
                             styles[style.styleIndex] = true;
@@ -435,9 +437,9 @@ class TextManager {
 }
 
 class Line {
-    constructor(color) {
+    constructor(color, styles=DEFAULT_STYLES) {
         this.x = LEFT_OFFSET;
-        this.lineSegments = [new LineSegment("", color, defaultStyles)];
+        this.lineSegments = [new LineSegment("", color, styles)];
     }
 
     get length() {
@@ -490,6 +492,10 @@ class LineSegment {
     hasSameStyles(styles) {
         return this.isBold == styles[0] && this.isStrikethrough == styles[1] 
             && this.isUnderline == styles[2] && this.isItalic == styles[3];
+    }
+
+    setColor(color) {
+        this.color = color;
     }
 
     setStyles(styles) {
@@ -682,6 +688,9 @@ STYLES.forEach(style => {
     REGISTERED_STYLES[style.name] = style;
     REGISTERED_CODES.push(style.code);
 });
+
+var DEFAULT_COLOR = GRAY;
+var DEFAULT_STYLES = new Array(STYLES.length - 1).fill(false);
 
 // registering all of the characters to objects
 const GLYPHS = [];
