@@ -506,12 +506,7 @@ class TextManager {
                     let hexCandidate = currentSection.substring(1, 8);
                     if (/^#[0-9a-fA-F]{6}$/.test(hexCandidate)) {
                         styles = DEFAULT_STYLES.slice();
-                        currentColor = new MCColor(
-                            null,
-                            "CUSTOM",
-                            hexCandidate,
-                            minecraftShadow(hexCandidate)
-                        );
+                        currentColor = new MCColor(null, "CUSTOM", hexCandidate, minecraftShadow(hexCandidate));
                         currentLine.add(new LineSegment(currentSection.substring(8), currentColor, styles));
                     } else {
                         currentLine.segments[currentLine.length - 1].add(currentSection);
